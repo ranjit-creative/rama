@@ -1,0 +1,90 @@
+const { Sequelize, DataTypes } = require('sequelize');
+
+const sequelize = new Sequelize({
+  dialect: 'mssql',
+  database: 'your_database',
+  host: 'your_server',
+  port: 1433,
+  username: 'your_username',
+  password: 'your_password',
+  dialectOptions: {
+    options: {
+      encrypt: true,
+      schema: 'ecom' // specify the schema name
+    },
+  },
+});
+
+const Order = sequelize.define('Order', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  orderDate: {
+    type: DataTypes.DATE,
+  },
+  totalAmount: {
+    type: DataTypes.FLOAT,
+  },
+});
+
+const Customer = sequelize.define('Customer', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  firstName: {
+    type: DataTypes.STRING,
+  },
+  lastName: {
+    type: DataTypes.STRING,
+  },
+  address: {
+    type: DataTypes.STRING,
+  },
+  email: {
+    type: DataTypes.STRING,
+  },
+  city: {
+    type: DataTypes.STRING,
+  },
+  country: {
+    type: DataTypes.STRING,
+  },
+});
+
+Order.belongsTo(Customer, {
+  foreignKey: 'customerId',
+});
+
+Customer.hasMany(Order, {
+  foreignKey: 'customerId',
+});
+
+(async () => {
+  await sequelize.sync();
+
+  // Create a new customer and order
+  const customer = await Customer.create({
+    firstName: 'John',
+    lastName: 'Doe',
+    address: '123 Main St',
+    email: 'johndoe@example.com',
+    city: 'Anytown',
+    country: 'USA',
+  });
+
+  const order = await Order.create({
+    orderDate: new Date(),
+    totalAmount: 100.0,
+    customerId: customer.id,
+  });
+
+  // Find all customers with their orders
+  const customersWithOrders = await Customer.findAll({
+    include: [Order],
+  });
+  console.log(customersWithOrders);
+})();
